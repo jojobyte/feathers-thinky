@@ -2,12 +2,16 @@ import chai from 'chai';
 import { base, example } from 'feathers-service-tests';
 import feathers from 'feathers';
 import errors from 'feathers-errors';
-import rethink from 'rethinkdbdash';
+// import rethink from 'rethinkdbdash';
 import service from '../src';
 
-const r = rethink({
-  db: 'feathers'
-});
+// const r = rethink({
+//   db: 'feathers'
+// });
+
+let thinky = require('thinky')();
+var type = thinky.type;
+var r = thinky.r;
 
 // RethinkDB: if no other sort order is given. This means that items can not be returned in the
 // same order they have been created so this counter is used for sorting instead.
@@ -42,23 +46,46 @@ const numberService = {
   }
 };
 
+/*
+ name: "Dave",
+ age: 23,
+ hobby: "fishing",
+ counter: 12,
+ createdAt: r.now()
+*/
+
+var People = thinky.createModel('people', {
+  id: type.string(),
+  name: type.string(),
+  nickNames: type.array().schema(type.string()),
+  age: type.number(),
+  hobby: type.string(),
+  counter: type.number(),
+  createdAt: type.date().default(r.now())
+});
+
+var PeopleCustomId = thinky.createModel('people_customid', {
+  customid: type.string(),
+  title: type.string(),
+  completed: type.boolean(),
+  createdAt: type.date().default(r.now())
+});
+
 const app = feathers()
   .use('/people', service({
-    Model: r,
-    name: 'people',
+    Model: People,
     watch: true,
     events: [ 'testing' ]
   }).extend(numberService))
   .use('/people-customid', service({
-    id: 'customid',
-    Model: r,
-    name: 'people_customid',
+    // id: 'customid',
+    Model: PeopleCustomId,
     watch: true,
     events: [ 'testing' ]
   }).extend(numberService));
 const people = app.service('people');
 
-describe('feathers-rethinkdb', () => {
+describe('feathers-thinky', () => {
   before(() => {
     return r.dbList().contains('feathers') // create db if not exists
       .do(dbExists => r.branch(
@@ -69,7 +96,7 @@ describe('feathers-rethinkdb', () => {
       .run().then(() => Promise.all([
         app.service('people').init(),
         app.service('people-customid').init({
-          primaryKey: 'customid'
+          // primaryKey: 'customid'
         })
       ])).then(() => app.setup());
   });

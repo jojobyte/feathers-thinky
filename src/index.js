@@ -148,7 +148,7 @@ class Service {
 
   create (data, params) {
     const idField = this.id;
-    return this.Model.save(data).run().then(res => {
+    return this.Model.save(data).then(res => {
       if (data[idField]) {
         if (res.errors) {
           return Promise.reject(new errors.Conflict('Duplicate primary key', res.errors));

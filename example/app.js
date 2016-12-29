@@ -10,18 +10,18 @@ const service = require('../lib');
 //   db: 'feathers'
 // });
 
-const rethinkdb= {
-  host: "localhost",
-    port: 28015,
-    authKey: "",
-    db: "feathers"
+const rethinkdb = {
+  host: 'localhost',
+  port: 28015,
+  authKey: '',
+  db: 'feathers'
 };
 
 let thinky = require('thinky')(rethinkdb);
 var type = thinky.type;
 var r = thinky.r;
 // Create the model
-var Todo = thinky.createModel("todos", {
+var Todo = thinky.createModel('todos', {
   id: type.string(),
   title: type.string(),
   completed: type.boolean(),
