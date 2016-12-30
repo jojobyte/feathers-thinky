@@ -24,7 +24,7 @@ class Service {
 
     this.type = 'rethinkdb';
     this.Model = options.Model;
-    this.id = options.id || 'id';
+    this.id = this.Model._pk;
     this.watch = options.watch !== undefined ? options.watch : true;
     this.paginate = options.paginate || {};
     this.events = this.watch ? BASE_EVENTS.concat(options.events) : options.events || [];
@@ -34,7 +34,7 @@ class Service {
     return Proto.extend(obj, this);
   }
 
-  init (opts = {}) {
+  init () {
     let r = this.Model._thinky.r;
     return r.dbList().contains(r._poolMaster._options.db);
   }
@@ -109,11 +109,12 @@ class Service {
   }
 
   _get (id, params = {}) {
-    let query = this.Model.filter(params.query).limit(1);
-
+    let query;
     // If an id was passed, just get the record.
     if (id !== null && id !== undefined) {
       query = this.Model.get(id);
+    } else {
+      query = this.Model.filter(params.query).limit(1);
     }
 
     if (params.query && params.query.$select) {
@@ -124,9 +125,6 @@ class Service {
       if (Array.isArray(data)) {
         data = data[0];
       }
-      // if (!data) {
-      //   throw new errors.NotFound(`No record found for id '${id}'`);
-      // }
       return data;
     }).catch(function () {
       throw new errors.NotFound(`No record found for id '${id}'`);
@@ -164,43 +162,9 @@ class Service {
       }
     }).then(select(params, this.id));
   }
-/*
-  patch (id, data, params) {
-    let query;
 
-    if (id !== null && id !== undefined) {
-      query = this._get(id);
-    } else if (params) {
-      query = this._find(params);
-    } else {
-      return Promise.reject(new Error('Patch requires an ID or params'));
-    }
-
-    // Find the original record(s), first, then patch them.
-    return query.then(getData => {
-      let query;
-      // console.log('==>', getData);
-      if (Array.isArray(getData)) {
-        query = this.Model.getAll(...getData.map(item => item[this.id]));
-      } else {
-        // query = this.Model._thinky.r.table(this.Model.getTableName()).get(id);
-        query = this.Model.get(id);
-      }
-
-      return query.update(data, {
-        returnChanges: true
-      }).run().then(response => {
-        // console.log('==>', getData, data, response.changes);
-        // console.log('===>>> ;;; ', data, response.changes);
-        let changes = response.changes.map(change => change.new_val);
-        return changes.length === 1 ? changes[0] : changes;
-      });
-    }).then(select(params, this.id));
-  }
-*/
-
-  _patch (id, data) {
-    return this._get(id)
+  _patch (id, data, params) {
+    return this._get(id, params)
       .then((found) => {
         return found.merge(data).save().then(function (response) {
           return response;
@@ -212,7 +176,7 @@ class Service {
     if (id === null) {
       return this._find(params).then(page => {
         return Promise.all(page.map(
-          current => this._patch(current.id, data, params))
+          current => this._patch(current[this.id], data, params))
         ).then(function (resp) {
           return resp;
         });
@@ -233,30 +197,29 @@ class Service {
     }).then(select(params, this.id));
   }
 
-  remove (id, params) {
-    let query;
+  _remove (id, params) {
+    let result = {};
+    return this._get(id, params).then(found => {
+      result = found;
+      return found.delete().then(() => {
+        return result;
+      });
+    });
+  }
 
-    // You have to pass id=null to remove all records.
-    if (id !== null && id !== undefined) {
-      query = this.Model.get(id);
-    } else if (id === null) {
-      query = this.createQuery(params.query);
-    } else {
-      return Promise.reject(new Error('You must pass either an id or params to remove.'));
+  remove (id, params) {
+    if (!id) {
+      return this._find(params).then(found => {
+        return Promise.all(found.map(
+            current => this._remove(current[this.id], params)
+          )).then(function (resp) {
+            return resp;
+          });
+      }
+      );
     }
 
-    return query.delete({
-      returnChanges: true
-    })
-      .run()
-      .then(res => {
-        if (res.changes && res.changes.length) {
-          let changes = res.changes.map(change => change.old_val);
-          return changes.length === 1 ? changes[0] : changes;
-        } else {
-          return [];
-        }
-      }).then(select(params, this.id));
+    return this._remove(id, params);
   }
 
   setup () {

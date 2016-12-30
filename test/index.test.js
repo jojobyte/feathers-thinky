@@ -60,9 +60,14 @@ var People = thinky.createModel('people', {
 
 var PeopleCustomId = thinky.createModel('people_customid', {
   customid: type.string(),
-  title: type.string(),
-  completed: type.boolean(),
+  name: type.string(),
+  nickNames: type.array().schema(type.string()),
+  age: type.number(),
+  hobby: type.string(),
+  counter: type.number(),
   createdAt: type.date().default(r.now())
+}, {
+  pk: 'customid'
 });
 
 const app = feathers()
@@ -73,6 +78,7 @@ const app = feathers()
   }).extend(numberService))
   .use('/people-customid', service({
     Model: PeopleCustomId,
+    // id: 'customid',
     watch: true,
     events: [ 'testing' ]
   }).extend(numberService));
