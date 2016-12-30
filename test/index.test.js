@@ -2,16 +2,18 @@ import chai from 'chai';
 import { base, example } from 'feathers-service-tests';
 import feathers from 'feathers';
 import errors from 'feathers-errors';
-// import rethink from 'rethinkdbdash';
 import service from '../src';
 
-// const r = rethink({
-//   db: 'feathers'
-// });
+const rethinkdb = {
+  host: 'localhost',
+  port: 28015,
+  authKey: '',
+  db: 'feathers'
+};
 
-let thinky = require('thinky')();
-var type = thinky.type;
-var r = thinky.r;
+let thinky = require('thinky')(rethinkdb);
+let type = thinky.type;
+let r = thinky.r;
 
 // RethinkDB: if no other sort order is given. This means that items can not be returned in the
 // same order they have been created so this counter is used for sorting instead.
@@ -46,14 +48,6 @@ const numberService = {
   }
 };
 
-/*
- name: "Dave",
- age: 23,
- hobby: "fishing",
- counter: 12,
- createdAt: r.now()
-*/
-
 var People = thinky.createModel('people', {
   id: type.string(),
   name: type.string(),
@@ -78,27 +72,21 @@ const app = feathers()
     events: [ 'testing' ]
   }).extend(numberService))
   .use('/people-customid', service({
-    // id: 'customid',
     Model: PeopleCustomId,
     watch: true,
     events: [ 'testing' ]
   }).extend(numberService));
 const people = app.service('people');
 
+// console.log('===========>>', people);
 describe('feathers-thinky', () => {
   before(() => {
-    return r.dbList().contains('feathers') // create db if not exists
-      .do(dbExists => r.branch(
-        dbExists,
-        { created: 0 },
-        r.dbCreate('feathers')
-      ))
-      .run().then(() => Promise.all([
-        app.service('people').init(),
-        app.service('people-customid').init({
+    return Promise.all([
+      app.service('people').init(),
+      app.service('people-customid').init({
           // primaryKey: 'customid'
-        })
-      ])).then(() => app.setup());
+      })
+    ]).then(() => app.setup());
   });
 
   after(() => {
@@ -126,12 +114,14 @@ describe('feathers-thinky', () => {
       const table = r.db('feathers').table('people');
 
       people.once('created', person => {
+        console.log('=====>> 1.', person);
         expect(person.name).to.equal('Marshall Thompson');
         expect(person.counter).to.equal(counter);
         table.get(person.id).delete().run();
       });
 
       people.once('removed', person => {
+        console.log('=====>> 2.', person);
         expect(person.name).to.equal('Marshall Thompson');
         done();
       });
@@ -146,14 +136,20 @@ describe('feathers-thinky', () => {
       const table = r.db('feathers').table('people');
 
       people.once('created', person => {
+        console.log('=====>> 3.', person);
         expect(person.name).to.equal('Marshall Thompson');
         person.name = 'Marshall T.';
         table.get(person.id).replace(person).run();
       });
 
-      people.once('patched', person => expect(person.name).to.equal('Marshall T.'));
+      people.once('patched', person => {
+        console.log('=====>> 4.', person);
+        return expect(person.name).to.equal('Marshall T.');
+      }
+      );
 
       people.once('updated', person => {
+        console.log('=====>> 5.', person);
         expect(person.name).to.equal('Marshall T.');
         table.get(person.id).delete().run();
       });
@@ -283,11 +279,12 @@ describe('RethinkDB service example test', () => {
 
 describe('init database', () => {
   it('service.init() initializes the database', () => {
-    return service({ Model: r, name: 'testTable' })
+    let TestTable = thinky.createModel('testTable', {});
+    return service({ Model: TestTable })
       .init()
       .then(() => {
         expect(r.tableList().contains('testTable'));
-        r.table('testTable').delete(null).run();
+        r.table('testTable').delete().run();
       });
   });
 });

@@ -36,18 +36,7 @@ class Service {
 
   init (opts = {}) {
     let r = this.Model._thinky.r;
-    let t = this.Model.getTableName();
-    let db = r._poolMaster._options.db;
-
-    return r.dbList().contains(db) // create db if not exists
-      .do(dbExists => r.branch(dbExists, {created: 0}, r.dbCreate(db)))
-      .run().then(() => {
-        return r.db(db).tableList().contains(t) // create table if not exists
-          .do(tableExists => r.branch(
-            tableExists, {created: 0},
-            r.tableCreate(t, opts))
-          ).run();
-      });
+    return r.dbList().contains(r._poolMaster._options.db);
   }
 
   createFilter (query) {
@@ -135,10 +124,12 @@ class Service {
       if (Array.isArray(data)) {
         data = data[0];
       }
-      if (!data) {
-        throw new errors.NotFound(`No record found for id '${id}'`);
-      }
+      // if (!data) {
+      //   throw new errors.NotFound(`No record found for id '${id}'`);
+      // }
       return data;
+    }).catch(function () {
+      throw new errors.NotFound(`No record found for id '${id}'`);
     });
   }
 
@@ -173,7 +164,7 @@ class Service {
       }
     }).then(select(params, this.id));
   }
-
+/*
   patch (id, data, params) {
     let query;
 
@@ -188,20 +179,46 @@ class Service {
     // Find the original record(s), first, then patch them.
     return query.then(getData => {
       let query;
-
+      // console.log('==>', getData);
       if (Array.isArray(getData)) {
         query = this.Model.getAll(...getData.map(item => item[this.id]));
       } else {
+        // query = this.Model._thinky.r.table(this.Model.getTableName()).get(id);
         query = this.Model.get(id);
       }
 
       return query.update(data, {
         returnChanges: true
       }).run().then(response => {
+        // console.log('==>', getData, data, response.changes);
+        // console.log('===>>> ;;; ', data, response.changes);
         let changes = response.changes.map(change => change.new_val);
         return changes.length === 1 ? changes[0] : changes;
       });
     }).then(select(params, this.id));
+  }
+*/
+
+  _patch (id, data) {
+    return this._get(id)
+      .then((found) => {
+        return found.merge(data).save().then(function (response) {
+          return response;
+        });
+      });
+  }
+
+  patch (id, data, params) {
+    if (id === null) {
+      return this._find(params).then(page => {
+        return Promise.all(page.map(
+          current => this._patch(current.id, data, params))
+        ).then(function (resp) {
+          return resp;
+        });
+      });
+    }
+    return this._patch(id, data, params);
   }
 
   update (id, data, params) {
