@@ -120,14 +120,12 @@ describe('feathers-thinky', () => {
       const table = r.db('feathers').table('people');
 
       people.once('created', person => {
-        console.log('=====>> 1.', person);
         expect(person.name).to.equal('Marshall Thompson');
         expect(person.counter).to.equal(counter);
         table.get(person.id).delete().run();
       });
 
       people.once('removed', person => {
-        console.log('=====>> 2.', person);
         expect(person.name).to.equal('Marshall Thompson');
         done();
       });
@@ -142,20 +140,17 @@ describe('feathers-thinky', () => {
       const table = r.db('feathers').table('people');
 
       people.once('created', person => {
-        console.log('=====>> 3.', person);
         expect(person.name).to.equal('Marshall Thompson');
         person.name = 'Marshall T.';
         table.get(person.id).replace(person).run();
       });
 
       people.once('patched', person => {
-        console.log('=====>> 4.', person);
         return expect(person.name).to.equal('Marshall T.');
       }
       );
 
       people.once('updated', person => {
-        console.log('=====>> 5.', person);
         expect(person.name).to.equal('Marshall T.');
         table.get(person.id).delete().run();
       });

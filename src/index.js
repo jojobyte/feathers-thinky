@@ -224,21 +224,22 @@ class Service {
 
   setup () {
     if (this.watch) {
-      this._cursor = this.Model.changes().run().then(cursor => {
+      this._cursor = this.Model.changes().execute().then(cursor => {
         cursor.each((error, data) => {
           if (error || typeof this.emit !== 'function') {
             return;
           }
-          if (data.old_val === null) {
-            this.emit('created', data.new_val);
-          } else if (data.new_val === null) {
-            this.emit('removed', data.old_val);
+          let ov = data.getOldValue();
+
+          if (!data.isSaved()) {
+            this.emit('removed', data);
+          } else if (!ov) {
+            this.emit('created', data);
           } else {
-            this.emit('updated', data.new_val);
-            this.emit('patched', data.new_val);
+            this.emit('updated', data);
+            this.emit('patched', data);
           }
         });
-
         return cursor;
       });
     }
