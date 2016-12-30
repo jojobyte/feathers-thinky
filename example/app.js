@@ -1,14 +1,9 @@
 'use strict';
-
-// const rethink = require('rethinkdbdash');
 const feathers = require('feathers');
 const rest = require('feathers-rest');
 const socketio = require('feathers-socketio');
 const bodyParser = require('body-parser');
 const service = require('../lib');
-// const r = rethink({
-//   db: 'feathers'
-// });
 
 const rethinkdb = {
   host: 'localhost',
@@ -31,7 +26,6 @@ var Todo = thinky.createModel('todos', {
 let counter = 0;
 const todoService = service({
   Model: Todo,
-  // name: 'todos',
   paginate: {
     default: 2,
     max: 4
