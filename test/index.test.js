@@ -280,12 +280,14 @@ describe('RethinkDB service example test', () => {
 
 describe('init database', () => {
   it('service.init() initializes the database', () => {
-    let TestTable = thinky.createModel('testTable', {});
+    let TestTable = thinky.createModel('testTable', {
+      id: type.string()
+    });
     return service({ Model: TestTable })
       .init()
       .then(() => {
         expect(r.tableList().contains('testTable'));
-        r.table('testTable').delete().run();
+        r.table('testTable').delete().then(() => console.log('wehdcuiewhui'));
       });
   });
 });

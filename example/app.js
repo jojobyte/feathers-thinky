@@ -23,8 +23,8 @@ var r = thinky.r;
 // Create the model
 var Todo = thinky.createModel('todos', {
   id: type.string(),
-  title: type.string(),
-  completed: type.boolean(),
+  text: type.string(),
+  complete: type.boolean(),
   createdAt: type.date().default(r.now())
 });
 

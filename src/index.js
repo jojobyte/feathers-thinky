@@ -36,7 +36,9 @@ class Service {
 
   init () {
     let r = this.Model._thinky.r;
-    return r.dbList().contains(r._poolMaster._options.db);
+    return r.dbList().contains(r._poolMaster._options.db).then(() => {
+      return r.db(r._poolMaster._options.db).tableList().contains(this.Model.getTableName());
+    });
   }
 
   createFilter (query) {
