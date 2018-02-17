@@ -211,8 +211,8 @@ class Service {
 
   remove (id, params) {
     if (!id) {
-      return this._find(params).then(found => {
-        return Promise.all(found.map(
+      return this._find(params).then(({data}) => {
+        return Promise.all(data.map(
             current => this._remove(current[this.id], params)
           )).then(function (resp) {
             return resp;
