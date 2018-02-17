@@ -1,8 +1,8 @@
 {
-  "name": "feathers-rethinkdb",
+  "name": "feathers-thinky",
   "description": "A RethinkDB Service for FeathersJS",
   "version": "0.3.3",
-  "homepage": "https://github.com/feathersjs/feathers-rethinkdb",
+  "homepage": "https://github.com/polst/feathers-thinky",
   "main": "lib/",
   "keywords": [
     "feathers",
@@ -12,7 +12,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git://github.com/feathersjs/feathers-rethinkdb.git"
+    "url": "git://github.com/polst/feathers-thinky.git"
   },
   "author": {
     "name": "Feathers contributors",
@@ -21,7 +21,7 @@
   },
   "contributors": [],
   "bugs": {
-    "url": "https://github.com/feathersjs/feathers-rethinkdb/issues"
+    "url": "https://github.com/polst/feathers-thinky/issues"
   },
   "engines": {
     "node": ">= 4"
