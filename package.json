@@ -49,7 +49,8 @@
     ]
   },
   "directories": {
-    "lib": "lib"
+    "lib": "lib",
+    "src": "src"
   },
   "dependencies": {
     "debug": "^2.2.0",
